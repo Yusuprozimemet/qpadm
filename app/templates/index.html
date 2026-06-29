@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>qpAdm web</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>qpAdm <span>web</span></h1>
+    <p class="tagline">Ancestry admixture modelling for consumer DNA — upload, run, visualise.</p>
+  </header>
+
+  <!-- Environment status -->
+  <section class="card" id="env-card">
+    <h2>Environment</h2>
+    <div class="env-grid">
+      <div class="env-item">
+        <span class="env-label">AdmixTools binaries</span>
+        <span class="badge {{ 'ok' if env.tools_ready else 'bad' }}">
+          {{ 'ready' if env.tools_ready else 'missing' }}
+        </span>
+      </div>
+      <div class="env-item">
+        <span class="env-label">Reference panel</span>
+        <span class="badge {{ 'ok' if env.reference_ready else 'bad' }}">
+          {{ 'ready' if env.reference_ready else 'missing' }}
+        </span>
+      </div>
+      <div class="env-item">
+        <span class="env-label">Pipeline</span>
+        <span class="badge {{ 'ok' if env.pipeline_ready else 'bad' }}">
+          {{ 'ready' if env.pipeline_ready else 'not ready' }}
+        </span>
+      </div>
+    </div>
+    {% if not env.pipeline_ready %}
+    <details class="hint">
+      <summary>The pipeline can't run yet — what's missing?</summary>
+      <ul>
+        {% for name, path in env.tools.items() %}
+          <li>{{ name }}: {{ path if path else '❌ not found (set ADMIXTOOLS_BIN / PLINK_BIN)' }}</li>
+        {% endfor %}
+        {% for ext, path in env.reference.items() %}
+          <li>reference .{{ ext }}: {{ path if path else '❌ not found (set REFERENCE_DIR / REFERENCE_PREFIX)' }}</li>
+        {% endfor %}
+      </ul>
+      <p>You can still use <strong>Visualise an existing log</strong> below without these.</p>
+    </details>
+    {% endif %}
+  </section>
+
+  <div class="columns">
+    <!-- Run pipeline -->
+    <section class="card">
+      <h2>1 · Run the pipeline</h2>
+      <form id="run-form">
+        <label>Your DNA file (23andMe / LivingDNA raw text)
+          <input type="file" name="genome" accept=".txt,.csv,.tsv" required />
+        </label>
+        <label>Sample label
+          <input type="text" name="sample_label" value="Sample" />
+        </label>
+        <label>Source (left) populations — one per line
+          <textarea name="sources" rows="4">{{ default_sources }}</textarea>
+        </label>
+        <label>Reference (right) populations — one per line
+          <textarea name="references" rows="6">{{ default_references }}</textarea>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" name="allsnps" checked /> use all SNPs (allsnps: YES)
+        </label>
+        <button type="submit" {{ '' if env.pipeline_ready else 'disabled title="Environment not ready"' }}>
+          Run qpAdm
+        </button>
+      </form>
+      <div id="job-progress" class="hidden">
+        <div class="progress"><div class="bar" id="bar"></div></div>
+        <p id="job-step">queued…</p>
+      </div>
+    </section>
+
+    <!-- Visualise existing log -->
+    <section class="card">
+      <h2>2 · Visualise an existing log</h2>
+      <p class="muted">Already have a qpAdm output log? Drop it here to chart it.</p>
+      <form id="parse-form">
+        <label>qpAdm log file
+          <input type="file" name="logfile" accept=".txt,.log,.out" required />
+        </label>
+        <button type="submit">Visualise</button>
+      </form>
+    </section>
+  </div>
+
+  <!-- Results -->
+  <section class="card hidden" id="results-card">
+    <h2>Results</h2>
+    <div id="verdict"></div>
+    <div class="results-grid">
+      <div><canvas id="chart"></canvas></div>
+      <div>
+        <table id="coeff-table">
+          <thead><tr><th>Source</th><th>Weight</th><th>± SE</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p id="pval"></p>
+      </div>
+    </div>
+    <details>
+      <summary>Raw qpAdm output</summary>
+      <pre id="raw-output"></pre>
+    </details>
+  </section>
+
+  <footer>
+    <p>Reference data: <a href="https://reich.hms.harvard.edu/allen-ancient-dna-resource-aadr-downloadable-genotypes-present-day-and-ancient-dna-data">AADR</a>
+       (subject to its own usage terms) · Engine:
+       <a href="https://github.com/DReichLab/AdmixTools">AdmixTools</a>.</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

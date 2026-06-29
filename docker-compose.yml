@@ -1,0 +1,15 @@
+services:
+  qpadm:
+    build: .
+    image: qpadm-web:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      # Put the AADR .geno/.snp/.ind trio here (read-only).
+      - ./data/reference:/data/reference:ro
+      # Uploads, intermediates and results persist here.
+      - ./data/workdir:/data/workdir
+    environment:
+      # Override if your panel uses a different file-name prefix.
+      REFERENCE_PREFIX: v54.1.p1_1240K_public
+    restart: unless-stopped

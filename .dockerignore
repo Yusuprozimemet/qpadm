@@ -1,0 +1,12 @@
+.git
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+workdir
+data
+.env
+*.ipynb
+tests
+*.tar
+README.md
